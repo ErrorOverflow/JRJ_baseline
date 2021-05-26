@@ -2,9 +2,10 @@ import h5py
 import numpy as np
 import torch
 import normalization
+import os
 
 
-class traffic_demand_prediction_dataset(torch.utils.data.datasets):
+class traffic_demand_prediction_dataset(torch.utils.data.Dataset):
     def __init__(self, x, y, key, val_len, test_len):
         self.x = x
         self.y = y
@@ -26,39 +27,40 @@ class traffic_demand_prediction_dataset(torch.utils.data.datasets):
         return self._len[f"{self.key}_len"]
 
 
-def get_data_loader(data_category: list,
-                    batch_size: int,
-                    X_list: list,
-                    Y_list: list,
-                    _len: list,
-                    dataset,
-                    Normal_Method: str):
-    val_len, test_len = _len[0], _len[1]
-
-    data, normal = list(), list()
+def get_data_loader(data_path: str, category: str, Normal_Method: str):
+    # val_len, test_len = _len[0], _len[1]
+    #
+    data = list()
 
     normal_method = getattr(normalization, Normal_Method)
 
-    for i, category in enumerate(data_category):
-        normal.append(normal_method())
-        print()
-        with h5py.File(f"nyc_data/{dataset}/{category}_data.h5", 'r') as hf:
-            data_pick = hf[f'{category}_pick'][:]
-        with h5py.File(f"nyc_data/{dataset}/{category}_data.h5", 'r') as hf:
-            data_drop = hf[f'{category}_drop'][:]
-        data.append(normal[i].fit_transform(np.stack([data_pick, data_drop], axis=2)))
-        # data.append(np.stack([data_pick, data_drop], axis=2))
+    with h5py.File(os.path.join(data_path, category + "_data.h5"), 'r') as hf:
+        data_pick = hf[category + "_pick"][:]
+        data_drop = hf[category + "_drop"][:]
+        print(data_pick)
+        print(data_pick.shape, data_drop.shape)
+        data.append(normal_method().fit_transform(X=np.stack([data_pick, data_drop], axis=2)))
+
     data = np.concatenate(data, axis=1)
+    print(type(data), data[:, 0, 0].shape)
+    print(data[:, 0, 0])
+    X, Y, X_list, Y_list = [], [], [], []
 
-    X_, Y_ = list(), list()
-    for i in range(max(X_list), data.shape[0] - max(Y_list)):
-        X_.append([data[i - j] for j in X_list])
-        Y_.append([data[i + j] for j in Y_list])
-    X_ = torch.from_numpy(np.asarray(X_)).float()
-    Y_ = torch.from_numpy(np.asarray(Y_)).float()
-    dls = dict()
+    for i in range(0, data.shape[0]):
+        X.append([data[i - j] for j in X_list])
+        Y.append([data[i + j] for j in Y_list])
 
-    for key in ['train', 'validate', 'test']:
-        dataset = traffic_demand_prediction_dataset(X_, Y_, key, val_len, test_len)
-        dls[key] = DataLoader(dataset=dataset, shuffle=True, batch_size=batch_size, num_workers=16)
-    return dls, normal
+
+# X_ = torch.from_numpy(np.asarray(X_)).float()
+# Y_ = torch.from_numpy(np.asarray(Y_)).float()
+# dls = dict()
+#
+# for key in ['train', 'validate', 'test']:
+#     dataset = traffic_demand_prediction_dataset(X_, Y_, key, val_len, test_len)
+#     dls[key] = torch.utils.data.DataLoader(dataset=dataset, shuffle=True, batch_size=batch_size, num_workers=16)
+# return dls, normal
+
+
+if __name__ == '__main__':
+    data_path = "/home/wangmulan/Documents/result/"
+    get_data_loader(data_path, category="bike", Normal_Method="Standard")
