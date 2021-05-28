@@ -27,9 +27,39 @@ class traffic_demand_prediction_dataset(torch.utils.data.Dataset):
         return self._len[f"{self.key}_len"]
 
 
+class DataLoader():
+    def __init__(self, path, windows, horizon, train_rate, valid_rate, normalize="Standard", category="bike"):
+        self.window = windows
+        self.horizon = horizon
+        self.train_rate = train_rate
+        self.valid_rate = valid_rate
+        self.normalize = normalize
+        self.category = category
+        self.data = list()
+        self._read_h5()
+        self._split()
+
+    def _read_h5(self):
+        normal_method = getattr(normalization, self.normalize)
+        with h5py.File(os.path.join(data_path, self.category + "_data.h5"), 'r') as hf:
+            data_pick = hf[self.category + "_pick"][:]
+            data_drop = hf[self.category + "_drop"][:]
+            print(data_pick)
+            print(data_pick.shape, data_drop.shape)
+            self.data.append(normal_method().fit_transform(X=np.stack([data_pick, data_drop], axis=2)))
+
+        self.data = np.concatenate(self.data, axis=1)
+
+    def _split(self):
+        train_set = range(self.window + self.horizon - 1, train)
+        valid_set = range(train, valid)
+        test_set = range(valid, self.n)
+        self.train = self._batchify(train_set, self.h)
+        self.valid = self._batchify(valid_set, self.h)
+        self.test = self._batchify(test_set, self.h)
+
+
 def get_data_loader(data_path: str, category: str, Normal_Method: str):
-    # val_len, test_len = _len[0], _len[1]
-    #
     data = list()
 
     normal_method = getattr(normalization, Normal_Method)
@@ -63,4 +93,5 @@ def get_data_loader(data_path: str, category: str, Normal_Method: str):
 
 if __name__ == '__main__':
     data_path = "/home/wangmulan/Documents/result/"
+    data = DataLoader(data_path, windows=24 * 7, train_rate=0.6, valid_rate=0.2)
     get_data_loader(data_path, category="bike", Normal_Method="Standard")
