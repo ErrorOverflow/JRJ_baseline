@@ -1,7 +1,9 @@
+import sys
+
 import h5py
 import numpy as np
 import torch
-import normalization
+import JRJ_baseline.dataLoader.normalization as normalization
 import os
 
 
@@ -27,8 +29,9 @@ class traffic_demand_prediction_dataset(torch.utils.data.Dataset):
         return self._len[f"{self.key}_len"]
 
 
-class DataLoader():
+class DataLoader:
     def __init__(self, path, windows, horizon, train_rate, valid_rate, normalize="Standard", category="bike"):
+        self.data_path = path
         self.window = windows
         self.horizon = horizon
         self.train_rate = train_rate
@@ -37,20 +40,21 @@ class DataLoader():
         self.category = category
         self.data = np.ndarray([0])
         self._read_h5()
-        self.n, self.m = self.data[:,:,0].shape
+        self.n, self.m = self.data.shape
         self.scale = np.ones(self.m)
         self.scale = torch.from_numpy(self.scale).float()
         self._split(int(train_rate * self.n), int((train_rate + valid_rate) * self.n))
 
     def _read_h5(self):
         normal_method = getattr(normalization, self.normalize)
-        with h5py.File(os.path.join(data_path, self.category + "_data.h5"), 'r') as hf:
+        with h5py.File(os.path.join(self.data_path, self.category + "_data.h5"), 'r') as hf:
             data_pick = hf[self.category + "_pick"][:]
             data_drop = hf[self.category + "_drop"][:]
             print(data_pick)
             print(data_pick.shape, data_drop.shape)
             self.data = normal_method().fit_transform(X=np.stack([data_pick, data_drop], axis=2))
 
+        self.data = self.data[:, :, 0]
         print(self.data.shape)  # (4368, 484, 2)
         # self.data = np.concatenate(self.data, axis=1)
 
@@ -66,7 +70,6 @@ class DataLoader():
         n = len(idx_set)
         X = torch.zeros((n, self.window, self.m))
         Y = torch.zeros((n, self.m))
-
         for i in range(n):
             end = idx_set[i] - self.horizon + 1
             start = end - self.window
@@ -126,4 +129,4 @@ class DataLoader():
 if __name__ == '__main__':
     data_path = "/home/wangmulan/Documents/result/"
     data = DataLoader(data_path, windows=24 * 7, train_rate=0.6, valid_rate=0.2, horizon=12)
-    get_data_loader(data_path, category="bike", Normal_Method="Standard")
+    # (data_path, category="bike", Normal_Method="Standard")
