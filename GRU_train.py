@@ -145,7 +145,7 @@ optimizer = Optim(
 )
 
 batch_size = 128
-epochs = 10
+epochs = 100
 best_val = 10000000
 save = 'model.pt'
 
