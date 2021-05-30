@@ -2,7 +2,7 @@ import math
 import time
 import torch.optim as optim
 import models
-import dataLoader.dataLoader as dataLoader
+import utils.dataLoader as dataLoader
 import torch
 import torch.nn as nn
 

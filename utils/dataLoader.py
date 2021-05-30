@@ -1,10 +1,12 @@
-import sys
-
 import h5py
 import numpy as np
 import torch
-import JRJ_baseline.dataLoader.normalization as normalization
+import JRJ_baseline.utils.normalization as normalization
 import os
+
+
+def normal_std(x):
+    return x.std() * np.sqrt((len(x) - 1.) / (len(x)))
 
 
 class traffic_demand_prediction_dataset(torch.utils.data.Dataset):
@@ -42,8 +44,12 @@ class DataLoader:
         self._read_h5()
         self.n, self.m = self.data.shape
         self.scale = np.ones(self.m)
-        self.scale = torch.from_numpy(self.scale).float()
         self._split(int(train_rate * self.n), int((train_rate + valid_rate) * self.n))
+        self.scale = torch.from_numpy(self.scale).float()
+        tmp = self.test[1] * self.scale.expand(self.test[1].size(0), self.m)
+        self.scale = torch.autograd.Variable(self.scale)
+        self.rse = normal_std(tmp)
+        self.rae = torch.mean(torch.abs(tmp - torch.mean(tmp)))
 
     def _read_h5(self):
         normal_method = getattr(normalization, self.normalize)
@@ -85,11 +91,11 @@ class DataLoader:
         else:
             index = torch.LongTensor(range(length))
         start_idx = 0
-        while (start_idx < length):
+        while start_idx < length:
             end_idx = min(length, start_idx + batch_size)
             excerpt = index[start_idx:end_idx]
             X, Y = inputs[excerpt], targets[excerpt]
-            X, Y = X.cuda(), Y.cuda()
+            # X, Y = X.cuda(), Y.cuda()
             yield torch.autograd.Variable(X), torch.autograd.Variable(Y)
             start_idx += batch_size
 
