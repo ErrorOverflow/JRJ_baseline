@@ -128,6 +128,7 @@ print(data.train[0].shape, data.train[1].shape)  # torch.Size([10347, 168, 1]) t
 window = data.train[0].shape[1]
 n_val = data.train[0].shape[2]
 
+
 model = models.Model(n_val, window, 32)
 
 nParams = sum([p.nelement() for p in model.parameters()])
