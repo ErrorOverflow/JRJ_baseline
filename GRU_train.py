@@ -128,7 +128,6 @@ print(data.train[0].shape, data.train[1].shape)  # torch.Size([10347, 168, 1]) t
 window = data.train[0].shape[1]
 n_val = data.train[0].shape[2]
 
-
 model = models.Model(n_val, window, 32)
 
 nParams = sum([p.nelement() for p in model.parameters()])
@@ -158,7 +157,8 @@ for epoch in range(1, epochs):
     val_loss, val_rae, val_corr, _ = evaluate(data, data.valid[0], data.valid[1], model, evaluateL2, evaluateL1,
                                               batch_size)
     print(
-        '| end of epoch {:3d} | time: {:5.2f}s | train_loss {:5.4f} | valid rse {:5.4f} | valid rae {:5.4f} | valid corr  {:5.4f} | lr {:5.4f}'
+        '| end of epoch {:3d} | time: {:5.2f}s | train_loss {:5.4f} | '
+        'valid rse {:5.4f} | valid rae {:5.4f} | valid corr  {:5.4f} | lr {:5.4f}'
             .format(epoch, (time.time() - epoch_start_time), train_loss, val_loss, val_rae, val_corr, optimizer.lr))
     # Save the model if the validation loss is the best we've seen so far.
     if val_loss < best_val:
