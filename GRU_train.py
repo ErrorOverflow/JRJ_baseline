@@ -2,6 +2,7 @@ import math
 import time
 import torch.optim as optim
 import models
+import JRJ_baseline.utils.normalization as normalization
 import utils.dataLoader as dataLoader
 import torch
 import torch.nn as nn
@@ -122,23 +123,22 @@ def evaluate(data, X, Y, model, evaluateL2, evaluateL1, batch_size):
     return rse, rae, correlation, predict
 
 
-data_path = "/home/wangmulan/Documents/result/"
-data = dataLoader.DataLoader(data_path, windows=24 * 7, train_rate=0.6, valid_rate=0.2, horizon=12)
-print(data.train[0].shape, data.train[1].shape)  # torch.Size([10347, 168, 1]) torch.Size([10347, 1])
-window = data.train[0].shape[1]
-n_val = data.train[0].shape[2]
-
-model = models.Model(n_val, window, 32)
-
-nParams = sum([p.nelement() for p in model.parameters()])
-print('* number of parameters: %d' % nParams)
-
+normal_method = normalization.Standard()
 criterion = nn.MSELoss(reduction='sum')
 evaluateL2 = nn.MSELoss(reduction='sum')
 evaluateL1 = nn.L1Loss(reduction='sum')
 criterion = criterion.cuda()
 evaluateL1 = evaluateL1.cuda()
 evaluateL2 = evaluateL2.cuda()
+
+data_path = "/home/wangmulan/Documents/result/"
+data = dataLoader.DataLoader(data_path, windows=24 * 7, train_rate=0.6, valid_rate=0.2, horizon=12,
+                             normalize=normal_method)
+print(data.train[0].shape, data.train[1].shape)  # torch.Size([10347, 168, 1]) torch.Size([10347, 1])
+window = data.train[0].shape[1]
+n_val = data.train[0].shape[2]
+
+model = models.Model(n_val, window, 32)
 
 optimizer = Optim(
     model.parameters(), 'adam', lr=0.01, max_grad_norm=10, start_decay_at=10, lr_decay=0.9
@@ -149,6 +149,9 @@ epochs = 100
 best_val = 10000000
 save = 'model.pt'
 
+nParams = sum([p.nelement() for p in model.parameters()])
+print('* number of parameters: %d' % nParams)
+
 print('begin training')
 
 for epoch in range(1, epochs):
@@ -156,9 +159,11 @@ for epoch in range(1, epochs):
     train_loss = train(data, data.train[0], data.train[1], model, criterion, optimizer, batch_size)
     val_loss, val_rae, val_corr, _ = evaluate(data, data.valid[0], data.valid[1], model, evaluateL2, evaluateL1,
                                               batch_size)
+    train_loss = normal_method.rmse_transform(train_loss ** 0.5)
+    val_loss = normal_method.rmse_transform(val_loss ** 0.5)
     print(
-        '| end of epoch {:3d} | time: {:5.2f}s | train_loss {:5.4f} | '
-        'valid rse {:5.4f} | valid rae {:5.4f} | valid corr  {:5.4f} | lr {:5.4f}'
+        '| end of epoch {:3d} | Time: {:5.2f}s | Train_loss {:5.4f} | '
+        'Valid RMSE {:5.4f} | Valid rae {:5.4f} | Valid corr {:5.4f} | lr {:5.4f}'
             .format(epoch, (time.time() - epoch_start_time), train_loss, val_loss, val_rae, val_corr, optimizer.lr))
     # Save the model if the validation loss is the best we've seen so far.
     if val_loss < best_val:

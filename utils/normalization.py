@@ -2,7 +2,7 @@ import numpy as np
 import h5py
 
 
-class MinMaxNormal(object):
+class MinMaxNormal:
     def __init__(self):
         pass
 
@@ -31,9 +31,10 @@ class MinMaxNormal(object):
         return x * self.maxmin() / 2.
 
 
-class Standard(object):
-
+class Standard:
     def __init__(self):
+        self.std = float()
+        self.mean = float()
         pass
 
     def fit(self, X):
@@ -68,7 +69,7 @@ class Standard(object):
         return X
 
 
-class Nonormal(object):
+class Nonormal:
 
     def __init__(self):
         pass

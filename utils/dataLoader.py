@@ -10,15 +10,17 @@ def normal_std(x):
 
 
 class DataLoader:
-    def __init__(self, path, windows, horizon, train_rate, valid_rate, normalize="Standard", category="bike"):
+    def __init__(self, path, windows, horizon, train_rate, valid_rate, normalize,
+                 category="bike"):
         self.data_path = path
         self.window = windows
         self.horizon = horizon
         self.train_rate = train_rate
         self.valid_rate = valid_rate
-        self.normalize = normalize
+        self._normal_method = normalize
         self.category = category
         self.data = np.ndarray([0])
+        self.data_statistics = {"std": 0.0, "mean": 0.0}
         self._read_h5()
         self.n, self.m = self.data.shape
         self.scale = np.ones(self.m)
@@ -30,16 +32,19 @@ class DataLoader:
         self.rae = torch.mean(torch.abs(tmp - torch.mean(tmp)))
 
     def _read_h5(self):
-        normal_method = getattr(normalization, self.normalize)
         with h5py.File(os.path.join(self.data_path, self.category + "_data.h5"), 'r') as hf:
             data_pick = hf[self.category + "_pick"][:]
             data_drop = hf[self.category + "_drop"][:]
-            print(data_pick)
-            print(data_pick.shape, data_drop.shape)
-            self.data = normal_method().fit_transform(X=np.stack([data_pick, data_drop], axis=2))
+            self.data = self._normal_method.fit_transform(X=np.stack([data_pick, data_drop], axis=2))
+            # noinspection PyBroadException
+            # try:
+            #     self.data_statistics["std"] = self._normal_method.get_std()
+            #     self.data_statistics["mean"] = self._normal_method.get_mean()
+            # except Exception as E:
+            #     print(E)
+            #     print("normalization class don't have a get_std() or get_mean() method")
 
         self.data = self.data[:, :, 0]
-        print(self.data.shape)  # (4368, 484, 2)
         # self.data = np.concatenate(self.data, axis=1)
 
     def _split(self, train_left_flag, valid_left_flag, ):
