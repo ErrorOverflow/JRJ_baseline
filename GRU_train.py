@@ -124,12 +124,9 @@ def evaluate(data, X, Y, model, evaluateL2, evaluateL1, batch_size):
 
 
 normal_method = normalization.Standard()
-criterion = nn.MSELoss(reduction='sum')
-evaluateL2 = nn.MSELoss(reduction='sum')
-evaluateL1 = nn.L1Loss(reduction='sum')
-criterion = criterion.cuda()
-evaluateL1 = evaluateL1.cuda()
-evaluateL2 = evaluateL2.cuda()
+criterion = nn.MSELoss(reduction='sum').cuda()
+evaluateL2 = nn.MSELoss(reduction='sum').cuda()
+evaluateL1 = nn.L1Loss(reduction='sum').cuda()
 
 data_path = "/home/wangmulan/Documents/result/"
 data = dataLoader.DataLoader(data_path, windows=24 * 7, train_rate=0.6, valid_rate=0.2, horizon=12,

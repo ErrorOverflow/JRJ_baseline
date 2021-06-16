@@ -1,7 +1,6 @@
 import h5py
 import numpy as np
 import torch
-import JRJ_baseline.utils.normalization as normalization
 import os
 
 
@@ -47,7 +46,7 @@ class DataLoader:
         self.data = self.data[:, :, 0]
         # self.data = np.concatenate(self.data, axis=1)
 
-    def _split(self, train_left_flag, valid_left_flag, ):
+    def _split(self, train_left_flag, valid_left_flag):
         train_set = range(self.window + self.horizon - 1, train_left_flag)
         valid_set = range(train_left_flag, valid_left_flag)
         test_set = range(valid_left_flag, self.n)
