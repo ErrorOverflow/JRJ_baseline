@@ -2,8 +2,8 @@ import math
 import time
 import torch.optim as optim
 import models
-import JRJ_baseline.utils.normalization as normalization
-import utils.dataLoader as dataLoader
+import JRJ_baseline.data.normalization as normalization
+import data.dataLoader as dataLoader
 import torch
 import torch.nn as nn
 
