@@ -135,7 +135,7 @@ print(data.train[0].shape, data.train[1].shape)  # torch.Size([10347, 168, 1]) t
 window = data.train[0].shape[1]
 n_val = data.train[0].shape[2]
 
-model = models.Model(n_val, window, 32)
+model = models.GRU.GRU(n_val, window, 32)
 
 optimizer = Optim(
     model.parameters(), 'adam', lr=0.01, max_grad_norm=10, start_decay_at=10, lr_decay=0.9

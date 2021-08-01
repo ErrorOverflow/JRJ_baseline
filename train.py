@@ -28,9 +28,9 @@ parser.add_argument('--decay', type=float, default=0.92, help='decay rate of lea
 args = parser.parse_args()
 
 
-class GRU_trainer():
+class GRU_trainer:
     def __init__(self, num_nodes, dropout, learning_rate, weight_decay, device, decay):
-        self.model = models.GRU(device, num_nodes, dropout)
+        self.model = models.GRU.GRU(device, num_nodes, dropout)
         self.model.to(device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate, weight_decay=weight_decay)
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, decay)
